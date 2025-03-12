@@ -26,8 +26,6 @@
             *out* (io/writer out)
             *err* (io/writer System/err)]
 
-    ;; We have to nest this in another binding call instead of using
-    ;; the one above so *in* and *out* will be bound to the socket
     (print "\nWhat is your name? ") (flush)
     (let [name (get-unique-player-name (read-line))
           current-room (ref (@rooms/rooms :start))
@@ -36,13 +34,13 @@
       (print "\nCount points? ") (flush)
       (let [point-count (read-line)]
         
-        (print "\nWhat is your power level? ") (flush)
+        (print "\nWhat is your power? ") (flush)
         (let [power (read-line)]
           
-          (print "\nWhat is your agility level? ") (flush)
+          (print "\nWhat is your agility? ") (flush)
           (let [agility (read-line)]
             
-            (print "\nWhat is your luck level? ") (flush)
+            (print "\nWhat is your luck? ") (flush)
             (let [luck (read-line)]
               
               (binding [player/*name* name
