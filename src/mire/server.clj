@@ -29,9 +29,22 @@
     ;; We have to nest this in another binding call instead of using
     ;; the one above so *in* and *out* will be bound to the socket
     (print "\nWhat is your name? ") (flush)
+    (print "\nCount points? ") (flush)
     (binding [player/*name* (get-unique-player-name (read-line))
-              player/*current-room* (ref (@rooms/rooms :start))
-              player/*inventory* (ref #{})]
+            player/*current-room* (ref (@rooms/rooms :start))
+            player/*inventory* (ref #{})
+            player/*point_count* (read-line)
+            player/*power* 0
+            player/*agility* 0
+            player/*luck* 0]
+
+      (println "Player Characteristics:")
+      (println "Name:" player/*name*)
+      (println "Point Count:" player/*point_count*)
+      (println "Power:" player/*power*)
+      (println "Agility:" player/*agility*)
+      (println "Luck:" player/*luck*)
+
       (dosync
        (commute (:inhabitants @player/*current-room*) conj player/*name*)
        (commute player/streams assoc player/*name* *out*))
