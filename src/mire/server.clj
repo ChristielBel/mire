@@ -29,14 +29,16 @@
     ;; We have to nest this in another binding call instead of using
     ;; the one above so *in* and *out* will be bound to the socket
     (print "\nWhat is your name? ") (flush)
-    (print "\nCount points? ") (flush)
     (binding [player/*name* (get-unique-player-name (read-line))
-            player/*current-room* (ref (@rooms/rooms :start))
-            player/*inventory* (ref #{})
-            player/*point_count* (read-line)
-            player/*power* 0
-            player/*agility* 0
-            player/*luck* 0]
+          player/*current-room* (ref (@rooms/rooms :start))
+          player/*inventory* (ref #{})]
+
+      (print "\nCount points? ") (flush)
+      (let [point-count (read-line)]
+      (binding [player/*point_count* (Integer.point-count)
+                player/*power* 0
+                player/*agility* 0
+                player/*luck* 0]
 
       (println "Player Characteristics:")
       (println "Name:" player/*name*)
