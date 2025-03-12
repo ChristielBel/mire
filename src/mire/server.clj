@@ -72,7 +72,7 @@
                       (.flush *err*)
                       (print player/prompt) (flush)
                       (recur (read-line))))
-                  (finally (cleanup)))))))))))))
+                  (finally (cleanup)))))))))))
 
 (defn -main
   ([port dir]
