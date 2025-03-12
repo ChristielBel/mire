@@ -29,37 +29,50 @@
     ;; We have to nest this in another binding call instead of using
     ;; the one above so *in* and *out* will be bound to the socket
     (print "\nWhat is your name? ") (flush)
-    (binding [player/*name* (get-unique-player-name (read-line))
-          player/*current-room* (ref (@rooms/rooms :start))
-          player/*inventory* (ref #{})]
-
+    (let [name (get-unique-player-name (read-line))
+          current-room (ref (@rooms/rooms :start))
+          inventory (ref #{})]
+      
       (print "\nCount points? ") (flush)
       (let [point-count (read-line)]
-      (binding [player/*point_count* (Integer.point-count)
-                player/*power* 0
-                player/*agility* 0
-                player/*luck* 0]
+        
+        (print "\nWhat is your power level? ") (flush)
+        (let [power (read-line)]
+          
+          (print "\nWhat is your agility level? ") (flush)
+          (let [agility (read-line)]
+            
+            (print "\nWhat is your luck level? ") (flush)
+            (let [luck (read-line)]
+              
+              (binding [player/*name* name
+                        player/*current-room* current-room
+                        player/*inventory* inventory
+                        player/*point_count* (Integer. point-count)
+                        player/*power* (Integer. power)
+                        player/*agility* (Integer. agility)
+                        player/*luck* (Integer. luck)]
 
-      (println "Player Characteristics:")
-      (println "Name:" player/*name*)
-      (println "Point Count:" player/*point_count*)
-      (println "Power:" player/*power*)
-      (println "Agility:" player/*agility*)
-      (println "Luck:" player/*luck*)
+              (println "Player Characteristics:")
+              (println "Name:" player/*name*)
+              (println "Point Count:" player/*point_count*)
+              (println "Power:" player/*power*)
+              (println "Agility:" player/*agility*)
+              (println "Luck:" player/*luck*)
 
-      (dosync
-       (commute (:inhabitants @player/*current-room*) conj player/*name*)
-       (commute player/streams assoc player/*name* *out*))
+              (dosync
+              (commute (:inhabitants @player/*current-room*) conj player/*name*)
+              (commute player/streams assoc player/*name* *out*))
 
-      (println (commands/look)) (print player/prompt) (flush)
+              (println (commands/look)) (print player/prompt) (flush)
 
-      (try (loop [input (read-line)]
-             (when input
-               (println (commands/execute input))
-               (.flush *err*)
-               (print player/prompt) (flush)
-               (recur (read-line))))
-           (finally (cleanup))))))
+              (try (loop [input (read-line)]
+                    (when input
+                      (println (commands/execute input))
+                      (.flush *err*)
+                      (print player/prompt) (flush)
+                      (recur (read-line))))
+                  (finally (cleanup)))))))))))))
 
 (defn -main
   ([port dir]
