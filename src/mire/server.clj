@@ -21,6 +21,21 @@
         (recur (read-line)))
     name))
 
+(defn- distribute-points [remaining-points characteristic-name]
+  (println (str "\nYou have " remaining-points " points left."))
+  (print (str "How many points do you want to assign to " characteristic-name "? ")) (flush)
+  (let [input (read-line)
+        points (try (Integer/parseInt input)
+                    (catch Exception _ nil))]
+    (cond
+      (nil? points) (do (println "Invalid input. Please enter a number.")
+                        (recur remaining-points characteristic-name))
+      (< points 1) (do (println "Points must be at least 1.")
+                       (recur remaining-points characteristic-name))
+      (> points remaining-points) (do (println "You don't have enough points.")
+                                      (recur remaining-points characteristic-name))
+      :else points)))
+
 (defn- mire-handle-client [in out]
   (binding [*in* (io/reader in)
             *out* (io/writer out)
@@ -29,48 +44,47 @@
     (print "\nWhat is your name? ") (flush)
     (let [name (get-unique-player-name (read-line))
           current-room (ref (@rooms/rooms :start))
-          inventory (ref #{})]
-      
-      (print "\nCount points? ") (flush)
-      (let [point-count (read-line)]
-        
-        (print "\nWhat is your power? ") (flush)
-        (let [power (read-line)]
-          
-          (print "\nWhat is your agility? ") (flush)
-          (let [agility (read-line)]
-            
-            (print "\nWhat is your luck? ") (flush)
-            (let [luck (read-line)]
-              
-              (binding [player/*name* name
-                        player/*current-room* current-room
-                        player/*inventory* inventory
-                        player/*point_count* (Integer. point-count)
-                        player/*power* (Integer. power)
-                        player/*agility* (Integer. agility)
-                        player/*luck* (Integer. luck)]
+          inventory (ref #{})
+          initial-points 10
+          default-power 1
+          default-agility 1
+          default-luck 1]
 
-              (println "Player Characteristics:")
-              (println "Name:" player/*name*)
-              (println "Point Count:" player/*point_count*)
-              (println "Power:" player/*power*)
-              (println "Agility:" player/*agility*)
-              (println "Luck:" player/*luck*)
+      (let [power-points (distribute-points initial-points "power")
+            remaining-points (- initial-points power-points)
+            agility-points (distribute-points remaining-points "agility")
+            remaining-points (- remaining-points agility-points)
+            luck-points (distribute-points remaining-points "luck")
+            remaining-points (- remaining-points luck-points)]
 
-              (dosync
-              (commute (:inhabitants @player/*current-room*) conj player/*name*)
-              (commute player/streams assoc player/*name* *out*))
+        (binding [player/*name* name
+                  player/*current-room* current-room
+                  player/*inventory* inventory
+                  player/*point_count* remaining-points
+                  player/*power* (+ default-power power-points)
+                  player/*agility* (+ default-agility agility-points)
+                  player/*luck* (+ default-luck luck-points)]
 
-              (println (commands/look)) (print player/prompt) (flush)
+          (println "\nPlayer Characteristics:")
+          (println "Name:" player/*name*)
+          (println "Remaining Points:" player/*point_count*)
+          (println "Power:" player/*power*)
+          (println "Agility:" player/*agility*)
+          (println "Luck:" player/*luck*)
 
-              (try (loop [input (read-line)]
-                    (when input
-                      (println (commands/execute input))
-                      (.flush *err*)
-                      (print player/prompt) (flush)
-                      (recur (read-line))))
-                  (finally (cleanup)))))))))))
+          (dosync
+           (commute (:inhabitants @player/*current-room*) conj player/*name*)
+           (commute player/streams assoc player/*name* *out*))
+
+          (println (commands/look)) (print player/prompt) (flush)
+
+          (try (loop [input (read-line)]
+                 (when input
+                   (println (commands/execute input))
+                   (.flush *err*)
+                   (print player/prompt) (flush)
+                   (recur (read-line))))
+               (finally (cleanup))))))))
 
 (defn -main
   ([port dir]
