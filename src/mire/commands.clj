@@ -19,7 +19,7 @@
        (str/join "\n" (map #(str "There is " % " here.\n")
                            @(:items @player/*current-room*))
        "\nPlayers in the room: "
-       (str/join ", " (seq @(:inhabitants @player/*current-room*)))))
+       (str/join ", " (seq @(:inhabitants @player/*current-room*))))))
 
 (defn move
   "\"♬ We gotta get out of this place... ♪\" Give a direction."
