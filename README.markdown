@@ -1,3 +1,7 @@
+# Сотав команды:
+- Беликова Кристина
+- Щербина Даниил
+
 # Mire
 
 It's a nonviolent MUD. (Multi-User Dungeon)
