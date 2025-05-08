@@ -1,7 +1,8 @@
 (ns mire.commands
   (:require [clojure.string :as str]
             [mire.rooms :as rooms]
-            [mire.player :as player]))
+            [mire.player :as player]
+            [mire.challenges :as challenges]))
 
 (defn- move-between-refs
   "Move one instance of obj between from and to. Must call in a transaction."
@@ -83,6 +84,65 @@
         (println player/prompt)))
     (str "You said " message)))
 
+(defn create-challenge
+  "Create a new challenge. Usage: create-challenge <type>"
+  [challenge-type]
+  (let [challenge-id (challenges/create-challenge player/*name* challenge-type)]
+    (if challenge-id
+      (str "Challenge " challenge-id " created! Others can join with 'join-challenge " challenge-id "'.")
+      "Failed to create challenge.")))
+
+(defn join-challenge
+  "Join a challenge. Usage: join-challenge <id>"
+  [challenge-id]
+  (if (challenges/join-challenge challenge-id player/*name*)
+    (str "Joined challenge " challenge-id ".")
+    "Cannot join challenge. It may have started or doesn't exist."))
+
+(defn start-challenge
+  "Start a challenge. Usage: start-challenge <id>"
+  [challenge-id]
+  (if (challenges/start-challenge challenge-id player/*name*)
+    (dosync ; <-- Add dosync to handle ref transactions
+      (let [challenge-ref (get @challenges/challenges challenge-id)
+            participants (:participants @challenge-ref)]
+        ;; Notify participants
+        (doseq [p participants]
+          (when-let [out (get @player/streams p)]
+            (binding [*out* out]
+              (println "Challenge started! Type 'forge' to earn points in the next 30 seconds!")
+              (println player/prompt)
+              (flush))))
+
+        ;; Start timer and process
+        (future
+          (Thread/sleep 30000)
+          (let [challenge @challenge-ref
+                scores (:scores challenge)
+                winner (if (empty? scores)
+                         "No one"
+                         (key (apply max-key val scores)))]
+            (doseq [p participants]
+              (when-let [out (get @player/streams p)]
+                (binding [*out* out]
+                  (println (str "Winner: " winner " with " (get scores winner 0) " points!"))
+                  (println player/prompt)
+                  (flush))))
+            (dosync (alter challenge-ref assoc :status :completed)))))
+      "Challenge started!")
+    "Failed to start challenge."))
+
+(defn forge
+  "Gather points during a challenge. Usage: forge"
+  []
+  (if-let [challenge-ref (challenges/find-active-challenge player/*name*)]
+    (let [points (+ (rand-int player/*power*)   ; No @ here!
+                    (rand-int player/*agility*) ; No @ here!
+                    (rand-int player/*luck*))] ; No @ here!
+      (challenges/add-score challenge-ref player/*name* points)
+      (str "Forged +" points " points!"))
+    "You're not in an active challenge."))
+
 (defn help
   "Show available commands and what they do."
   []
@@ -139,7 +199,11 @@
                "say" say
                "help" help
                "stats" stats
-               "distribute" distribute})
+               "distribute" distribute
+               "create-challenge" create-challenge
+               "join-challenge" join-challenge
+               "start-challenge" start-challenge
+               "forge" forge})
 
 ;; Command handling
 
