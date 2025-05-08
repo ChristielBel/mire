@@ -12,15 +12,31 @@
                              :status :waiting
                              :scores {}})]
      (alter challenges assoc challenge-name new-challenge)
+     ;; Notify all players
+     (doseq [[player-name player-stream] @player/streams]
+       (when (and player-stream (not= player-name creator))
+             (binding [*out* player-stream]
+                      (println (str "A new challenge '" challenge-name "' has been created by " creator "!"))
+                      (println player/prompt)
+                      (flush))))
      true)))
 
 (defn join-challenge [challenge-name player]
   (dosync
    (if-let [challenge-ref (get @challenges challenge-name)]
-     (let [challenge @challenge-ref]
-       (if (= (:status challenge) :waiting)
+     (let [challenge @challenge-ref
+           in-other-challenge? (some (fn [[_ ch-ref]]
+                                      (contains? (:participants @ch-ref) player))
+                                    @challenges)]
+       (if (and (= (:status challenge) :waiting)
+                (not in-other-challenge?))
          (do
            (alter challenge-ref update :participants conj player)
+           (when-let [creator-stream (get @player/streams (:creator challenge))]
+             (binding [*out* creator-stream]
+                      (println (str player " has joined your challenge: " challenge-name))
+                      (println player/prompt)
+                      (flush)))
            true)
          false))
      false)))

@@ -92,14 +92,14 @@
       "Failed to create challenge."))
 
 (defn join-challenge
-  "Join a challenge. Usage: join-challenge <id>"
+  "Join a challenge. Usage: join-challenge <name>"
   [challenge-name]
   (if (challenges/join-challenge challenge-name player/*name*)
     (str "Joined challenge " challenge-name ".")
-    "Cannot join challenge. It may have started or doesn't exist."))
+    "Cannot join challenge. It may have started or doesn't exist, or you're already joined it."))
 
 (defn start-challenge
-  "Start a challenge. Usage: start-challenge <id>"
+  "Start a challenge. Usage: start-challenge <name>"
   [challenge-name]
   (if (challenges/start-challenge challenge-name player/*name*)
     (dosync ; <-- Add dosync to handle ref transactions
@@ -135,9 +135,9 @@
   "Gather points during a challenge. Usage: forge"
   []
   (if-let [challenge-ref (challenges/find-active-challenge player/*name*)]
-    (let [points (+ (rand-int player/*power*)   ; No @ here!
-                    (rand-int player/*agility*) ; No @ here!
-                    (rand-int player/*luck*))] ; No @ here!
+    (let [points (+ (rand-int player/*power*)
+                    (rand-int player/*agility*)
+                    (rand-int player/*luck*))]
       (challenges/add-score challenge-ref player/*name* points)
       (str "Forged +" points " points!"))
     "You're not in an active challenge."))
