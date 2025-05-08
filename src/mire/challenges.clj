@@ -3,24 +3,20 @@
 
 (def challenges (ref {})) ; Maps challenge IDs to challenge data refs
 
-(defn generate-challenge-id []
-  (str (java.util.UUID/randomUUID)))
-
-(defn create-challenge [creator challenge-type]
+(defn create-challenge [creator challenge-type challenge-name]
   (dosync
-   (let [challenge-id (generate-challenge-id)
-         new-challenge (ref {:id challenge-id
+   (let [new-challenge (ref {:name challenge-name
                              :type challenge-type
                              :creator creator
                              :participants #{creator}
                              :status :waiting
                              :scores {}})]
-     (alter challenges assoc challenge-id new-challenge)
-     challenge-id)))
+     (alter challenges assoc challenge-name new-challenge)
+     true)))
 
-(defn join-challenge [challenge-id player]
+(defn join-challenge [challenge-name player]
   (dosync
-   (if-let [challenge-ref (get @challenges challenge-id)]
+   (if-let [challenge-ref (get @challenges challenge-name)]
      (let [challenge @challenge-ref]
        (if (= (:status challenge) :waiting)
          (do
@@ -29,9 +25,9 @@
          false))
      false)))
 
-(defn start-challenge [challenge-id creator]
+(defn start-challenge [challenge-name creator]
   (dosync
-   (if-let [challenge-ref (get @challenges challenge-id)]
+   (if-let [challenge-ref (get @challenges challenge-name)]
      (let [challenge @challenge-ref]
        (if (and (= (:status challenge) :waiting)
                 (= (:creator challenge) creator))

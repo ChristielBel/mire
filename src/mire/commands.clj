@@ -85,26 +85,25 @@
     (str "You said " message)))
 
 (defn create-challenge
-  "Create a new challenge. Usage: create-challenge <type>"
-  [challenge-type]
-  (let [challenge-id (challenges/create-challenge player/*name* challenge-type)]
-    (if challenge-id
-      (str "Challenge " challenge-id " created! Others can join with 'join-challenge " challenge-id "'.")
-      "Failed to create challenge.")))
+  "Create a new challenge. Usage: create-challenge <type> <name>"
+  [challenge-type challenge-name]
+    (if (challenges/create-challenge player/*name* challenge-type challenge-name)
+      (str "Challenge " challenge-name " created! Others can join with 'join-challenge " challenge-name "'.")
+      "Failed to create challenge."))
 
 (defn join-challenge
   "Join a challenge. Usage: join-challenge <id>"
-  [challenge-id]
-  (if (challenges/join-challenge challenge-id player/*name*)
-    (str "Joined challenge " challenge-id ".")
+  [challenge-name]
+  (if (challenges/join-challenge challenge-name player/*name*)
+    (str "Joined challenge " challenge-name ".")
     "Cannot join challenge. It may have started or doesn't exist."))
 
 (defn start-challenge
   "Start a challenge. Usage: start-challenge <id>"
-  [challenge-id]
-  (if (challenges/start-challenge challenge-id player/*name*)
+  [challenge-name]
+  (if (challenges/start-challenge challenge-name player/*name*)
     (dosync ; <-- Add dosync to handle ref transactions
-      (let [challenge-ref (get @challenges/challenges challenge-id)
+      (let [challenge-ref (get @challenges/challenges challenge-name)
             participants (:participants @challenge-ref)]
         ;; Notify participants
         (doseq [p participants]
