@@ -7,7 +7,7 @@
 
 (defn create-challenge [creator challenge-type challenge-name]
   (dosync
-   (if (contains? @challenges challenge-name)
+   (if (and (contains? @challenges challenge-name) (not= (:status @(@challenges challenge-name)) :completed))
      false
      ; Return false if a challenge with the same name already exists
      (let [new-challenge (ref
@@ -34,7 +34,8 @@
      (let [challenge           @challenge-ref
            in-other-challenge? (some
                                  (fn [[_ ch-ref]]
-                                   (contains? (:participants @ch-ref) player))
+                                    (and (not= (:status @ch-ref))
+                                   (contains? (:participants @ch-ref) player)))
                                  @challenges)]
        (if (and (= (:status challenge) :waiting)
                 (not in-other-challenge?))

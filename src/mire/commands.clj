@@ -131,7 +131,7 @@
                   (println player/prompt)
                   (flush))))
             (dosync (alter challenge-ref assoc :status :completed)))))
-      "Challenge started!")
+      "")
     "Failed to start challenge."))
 
 (defn forge
