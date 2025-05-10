@@ -8,7 +8,7 @@
 (def ^:dynamic *agility*)
 (def ^:dynamic *luck*)
 
-(def prompt "> ")
+(def prompt "")
 (def streams (ref {}))
 
 (defn carrying? [thing]
