@@ -82,7 +82,7 @@ bot(Stream) :-
         sleep(1),  % Даем время серверу ответить
         
         get_last_message(Last),
-        (   Last = "> You can't go that way."
+        (   Last = "You can't go that way."
             ->  format('Bot hit his head! Ouch!~n', []),
                 sleep(4),
                 format(Stream, '~s~n', ["say AAAAAAAAAAAAAAAAAAAA"]),
